@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}任务历史{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-clock-history"></i> 任务历史</h2>
+    </div>
+    <div class="col text-end">
+        <button class="btn btn-secondary" onclick="clearHistory()">
+            <i class="bi bi-trash"></i> 清空历史
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>配置ID</th>
+                        <th>开始时间</th>
+                        <th>结束时间</th>
+                        <th>状态</th>
+                        <th>阅读时长</th>
+                        <th>错误信息</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in history %}
+                    <tr>
+                        <td>{{ record.config_id }}</td>
+                        <td>{{ record.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ record.end_time.strftime('%Y-%m-%d %H:%M:%S') if record.end_time else '进行中' }}</td>
+                        <td>
+                            <span class="badge {% if record.status == 'success' %}bg-success
+                                       {% elif record.status == 'failed' %}bg-danger
+                                       {% else %}bg-warning{% endif %}">
+                                {{ {'success': '成功', 'failed': '失败', 'stopped': '已停止'}[record.status] }}
+                            </span>
+                        </td>
+                        <td>{{ record.read_minutes if record.read_minutes else '-' }} 分钟</td>
+                        <td>
+                            {% if record.error_message %}
+                            <button class="btn btn-sm btn-link" onclick="showError('{{ record.error_message }}')">
+                                查看错误
+                            </button>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">暂无历史记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 错误详情模态框 -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> 错误详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="errorDetails" class="bg-light p-3 rounded"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showError(message) {
+    document.getElementById('errorDetails').textContent = message;
+    new bootstrap.Modal(document.getElementById('errorModal')).show();
+}
+
+function clearHistory() {
+    if (confirm('确定要清空所有历史记录吗？')) {
+        fetch('/history/clear', {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to clear history');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('清空历史记录失败');
+        });
+    }
+}
+</script>
+{% endblock %} 

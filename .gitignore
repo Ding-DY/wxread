@@ -1,0 +1,23 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Log files
+logs/
+*.log
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env
+
+# IDE files
+.idea/
+.vscode/
+
+# Database
+*.db
+
+# Config files with sensitive data
+config.local.py

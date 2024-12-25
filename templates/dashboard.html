@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+
+{% block title %}控制面板{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="bi bi-grid-3x3-gap"></i> 我的配置</h2>
+    </div>
+    <div class="col text-end">
+        <a href="{{ url_for('add_config') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 添加新配置
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for config in configs %}
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> 配置 #{{ config.id }}
+                </h5>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="config-{{ config.id }}" 
+                           {% if config.is_active %}checked{% endif %}
+                           onchange="toggleConfig({{ config.id }}, this.checked)">
+                    <label class="form-check-label" for="config-{{ config.id }}">启用</label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p class="mb-2">
+                        <i class="bi bi-clock-history"></i>
+                        <strong>阅读次数：</strong> 
+                        <span class="badge bg-info">{{ config.read_num }} 次</span>
+                        <small class="text-muted">(约 {{ config.read_num * 0.5 }} 分钟)</small>
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-bell"></i>
+                        <strong>推送方式：</strong> 
+                        <span class="badge {% if config.push_method %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ config.push_method|default('未设置', true)|title }}
+                        </span>
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-circle-fill {% if config.is_running %}text-success{% else %}text-secondary{% endif %}"></i>
+                        <strong>状态：</strong>
+                        <span class="badge {% if config.is_running %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ '运行中' if config.is_running else '已停止' }}
+                        </span>
+                        {% if config.is_running %}
+                        <small class="text-muted">
+                            (开始于: {{ config.last_run.strftime('%H:%M:%S') if config.last_run else 'N/A' }})
+                        </small>
+                        {% endif %}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-calendar-check"></i>
+                        <strong>定时任务：</strong>
+                        {% if config.schedule_type %}
+                            <span class="badge bg-primary">
+                                {{ {'once': '单次', 'daily': '每日', 'weekly': '每周'}[config.schedule_type] }}
+                            </span>
+                            <span class="text-muted">
+                                {% if config.schedule_time %}
+                                    {{ '{:02d}:{:02d}'.format(config.schedule_time.seconds//3600, 
+                                       (config.schedule_time.seconds//60)%60) }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                {% if config.schedule_type == 'weekly' and config.schedule_days %}
+                                    {% set days = [] %}
+                                    {% for day in config.schedule_days.split(',') %}
+                                        {% set day_name = {'1':'周一', '2':'周二', '3':'周三', '4':'周四', 
+                                                          '5':'周五', '6':'周六', '7':'周日'}.get(day) %}
+                                        {% if day_name %}
+                                            {% set _ = days.append(day_name) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {{ days|join(', ') }}
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">未设置</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-clock-history"></i>
+                        <strong>上次运行：</strong>
+                        <span class="text-muted">
+                            {{ config.last_run.strftime('%Y-%m-%d %H:%M:%S') if config.last_run else '从未运行' }}
+                        </span>
+                    </p>
+                    <p class="mb-0">
+                        <i class="bi bi-calendar-plus"></i>
+                        <strong>创建时间：</strong>
+                        <span class="text-muted">
+                            {{ config.created_at.strftime('%Y-%m-%d %H:%M:%S') if config.created_at else 'N/A' }}
+                        </span>
+                    </p>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    {% if not config.is_running %}
+                    <button class="btn btn-success btn-sm" onclick="startConfig({{ config.id }})">
+                        <i class="bi bi-play-fill"></i> 启动
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="scheduleConfig({{ config.id }})">
+                        <i class="bi bi-calendar-plus"></i> 定时
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="editConfig({{ config.id }})">
+                        <i class="bi bi-pencil"></i> 编辑
+                    </button>
+                    {% else %}
+                    <button class="btn btn-danger btn-sm" onclick="stopConfig({{ config.id }})">
+                        <i class="bi bi-stop-fill"></i> 停止
+                    </button>
+                    {% endif %}
+                    <button class="btn btn-info btn-sm text-white" onclick="viewDetails({{ config.id }})">
+                        <i class="bi bi-eye"></i> 详情
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteConfig({{ config.id }})">
+                        <i class="bi bi-trash"></i> 删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            还没有配置。<a href="{{ url_for('add_config') }}" class="alert-link">添加第一个配置</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 详情模态框 -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle"></i> 配置详情
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="configDetails" class="bg-light p-3 rounded"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 定时任务模态框 -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-plus"></i> 设置定时任务
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="scheduleConfigId">
+                <div class="mb-3">
+                    <label class="form-label">任务类型</label>
+                    <select class="form-select" id="scheduleType">
+                        <option value="once">单次执行</option>
+                        <option value="daily">每日执行</option>
+                        <option value="weekly">每周执行</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">执行时间</label>
+                    <input type="time" class="form-control" id="scheduleTime">
+                </div>
+                <div class="mb-3" id="weekDaysGroup" style="display: none;">
+                    <label class="form-label">执行日期</label>
+                    <div class="btn-group d-flex flex-wrap gap-2" role="group">
+                        {% for day in range(1,8) %}
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="weekDays" 
+                                   value="{{ day }}" id="day{{ day }}">
+                            <label class="form-check-label" for="day{{ day }}">
+                                {{ {'1':'周一', '2':'周二', '3':'周三', '4':'周四', 
+                                   '5':'周五', '6':'周六', '7':'周日'}[day|string] }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveSchedule()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加编辑配置模态框 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> 编辑配置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editConfigId">
+                    <div class="mb-3">
+                        <label for="editReadNum" class="form-label">阅读次数</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <input type="number" class="form-control" id="editReadNum" required>
+                            <span class="input-group-text">次</span>
+                        </div>
+                        <div class="form-text">每次阅读30秒，120次约为1小时</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editPushMethod" class="form-label">推送方式</label>
+                        <select class="form-select" id="editPushMethod">
+                            <option value="">不推送</option>
+                            <option value="pushplus">PushPlus</option>
+                            <option value="telegram">Telegram</option>
+                        </select>
+                    </div>
+                    
+                    <div id="editPushplusFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="editPushplusToken" class="form-label">PushPlus Token</label>
+                            <input type="text" class="form-control" id="editPushplusToken">
+                        </div>
+                    </div>
+                    
+                    <div id="editTelegramFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="editTelegramBotToken" class="form-label">Telegram Bot Token</label>
+                            <input type="text" class="form-control" id="editTelegramBotToken">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTelegramChatId" class="form-label">Telegram Chat ID</label>
+                            <input type="text" class="form-control" id="editTelegramChatId">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleConfig(id, status) {
+    fetch(`/config/${id}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({active: status})
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update configuration status');
+    });
+}
+
+function viewDetails(id) {
+    fetch(`/config/${id}/details`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('configDetails').textContent = 
+                JSON.stringify(data, null, 2);
+            new bootstrap.Modal(document.getElementById('detailsModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load configuration details');
+        });
+}
+
+function deleteConfig(id) {
+    if (confirm('确定要删除这个配置吗？所有相关的历史记录也会被删除。')) {
+        fetch(`/config/${id}/delete`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to delete configuration');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('删除配置失败');
+        });
+    }
+}
+
+function startConfig(id) {
+    fetch(`/config/${id}/start`, {
+        method: 'POST'
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            throw new Error('Failed to start configuration');
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('Failed to start configuration');
+    });
+}
+
+function stopConfig(id) {
+    if (confirm('确定要停止这个配置吗？')) {
+        fetch(`/config/${id}/stop`, {
+            method: 'POST'
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to stop configuration');
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('停止配置失败');
+        });
+    }
+}
+
+function scheduleConfig(id) {
+    document.getElementById('scheduleConfigId').value = id;
+    new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+}
+
+function saveSchedule() {
+    const id = document.getElementById('scheduleConfigId').value;
+    const type = document.getElementById('scheduleType').value;
+    const time = document.getElementById('scheduleTime').value;
+    
+    // 验证时间格式
+    if (!time) {
+        alert('请选择执行时间');
+        return;
+    }
+    
+    let days = [];
+    if (type === 'weekly') {
+        document.getElementsByName('weekDays').forEach(cb => {
+            if (cb.checked) days.push(cb.value);
+        });
+        // 验证是否选择了星期
+        if (days.length === 0) {
+            alert('请选择执行日期');
+            return;
+        }
+    }
+    
+    fetch(`/config/${id}/schedule`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            type: type,
+            time: time,
+            days: days.join(',')
+        })
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            throw new Error('Failed to save schedule');
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save schedule');
+    });
+}
+
+document.getElementById('scheduleType').addEventListener('change', function() {
+    document.getElementById('weekDaysGroup').style.display = 
+        this.value === 'weekly' ? 'block' : 'none';
+});
+
+function editConfig(id) {
+    // 获取配置详情
+    fetch(`/config/${id}/details`)
+        .then(response => response.json())
+        .then(config => {
+            document.getElementById('editConfigId').value = id;
+            document.getElementById('editReadNum').value = config.read_num;
+            document.getElementById('editPushMethod').value = config.push_method || '';
+            document.getElementById('editPushplusToken').value = config.pushplus_token || '';
+            document.getElementById('editTelegramBotToken').value = config.telegram_bot_token || '';
+            document.getElementById('editTelegramChatId').value = config.telegram_chat_id || '';
+            
+            // 显示/隐藏推送字段
+            toggleEditPushFields(config.push_method);
+            
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('加载配置失败');
+        });
+}
+
+function toggleEditPushFields(method) {
+    document.getElementById('editPushplusFields').style.display = 
+        method === 'pushplus' ? 'block' : 'none';
+    document.getElementById('editTelegramFields').style.display = 
+        method === 'telegram' ? 'block' : 'none';
+}
+
+document.getElementById('editPushMethod').addEventListener('change', function() {
+    toggleEditPushFields(this.value);
+});
+
+function saveEdit() {
+    const id = document.getElementById('editConfigId').value;
+    const data = {
+        read_num: parseInt(document.getElementById('editReadNum').value),
+        push_method: document.getElementById('editPushMethod').value,
+        pushplus_token: document.getElementById('editPushplusToken').value,
+        telegram_bot_token: document.getElementById('editTelegramBotToken').value,
+        telegram_chat_id: document.getElementById('editTelegramChatId').value
+    };
+    
+    fetch(`/config/${id}/edit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            throw new Error('Failed to save configuration');
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert('保存配置失败');
+    });
+}
+</script>
+{% endblock %} 

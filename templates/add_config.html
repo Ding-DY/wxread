@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}添加配置{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-gear-fill"></i> 添加新配置</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="headers" class="form-label">Headers (JSON格式)</label>
+                        <textarea class="form-control" id="headers" name="headers" rows="5" required 
+                                placeholder="请粘贴从浏览器开发者工具中复制的Headers"></textarea>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> 请粘贴完整的Headers信息
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cookies" class="form-label">Cookies (JSON格式)</label>
+                        <textarea class="form-control" id="cookies" name="cookies" rows="5" required
+                                placeholder="请粘贴从浏览器开发者工具中复制的Cookies"></textarea>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> 请粘贴完整的Cookies信息
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="read_num" class="form-label">阅读次数</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                            <input type="number" class="form-control" id="read_num" name="read_num" value="120">
+                        </div>
+                        <div class="form-text text-muted">每次阅读30秒，默认值120次（1小时）</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="push_method" class="form-label">推送方式</label>
+                        <select class="form-select" id="push_method" name="push_method">
+                            <option value="">不推送</option>
+                            <option value="pushplus">PushPlus推送</option>
+                            <option value="telegram">Telegram推送</option>
+                        </select>
+                    </div>
+                    
+                    <div id="pushplus_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="pushplus_token" class="form-label">PushPlus Token</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                <input type="text" class="form-control" id="pushplus_token" name="pushplus_token">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="telegram_fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="telegram_bot_token" class="form-label">Telegram Bot Token</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-robot"></i></span>
+                                <input type="text" class="form-control" id="telegram_bot_token" name="telegram_bot_token">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telegram_chat_id" class="form-label">Telegram Chat ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-chat"></i></span>
+                                <input type="text" class="form-control" id="telegram_chat_id" name="telegram_chat_id">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> 保存配置
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('push_method').addEventListener('change', function() {
+    const pushplusFields = document.getElementById('pushplus_fields');
+    const telegramFields = document.getElementById('telegram_fields');
+    
+    if (this.value === 'pushplus') {
+        pushplusFields.style.display = 'block';
+        telegramFields.style.display = 'none';
+    } else if (this.value === 'telegram') {
+        pushplusFields.style.display = 'none';
+        telegramFields.style.display = 'block';
+    } else {
+        pushplusFields.style.display = 'none';
+        telegramFields.style.display = 'none';
+    }
+});
+</script>
+{% endblock %} 
