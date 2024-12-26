@@ -1,18 +1,7 @@
-*推一个机场，用了一年多，可以走我的优惠码【88888888】相当于50多一年，trySmall可用*<br>
-*【科学上网】机场地址--->[R星云](https://web.rstar.cloud/)<---机场地址【科学上网】* <br>
-*走的是我的专属返利10%，相当于你充50我得10元* `AFF`<br>
-*觉得这个项目对你有帮助恰巧你需要节点的话可以看一下*
+# 微信读书助手 Web 版
 
-   
-## Attention 📢
+在原脚本的基础上搭建一个基于 Flask 的微信读书自动阅读 Web 管理系统。
 
-1. **签到次数调整**：只需完成签到将`num`次数从120调整为2，每次`num`为30秒，200即100分钟。
-   
-2. **解决阅读时间问题**：对于issue中提出的“阅读时间没有增加”，“增加时间与刷的时间不对等”建议替换`capture.py`中的【headers】、【cookies】字段。保留【data】字段。
-
-3. **GitHub Action部署**：使用GitHub action部署时去掉抓包得到的`headers=`、`cookies=`，填入后面的字典格式。
-
-***
 ## 项目介绍 📚
 
 开发这个脚本的主要目的是为了在微信读书的阅读挑战赛中刷时长和天数。由于本人偶尔看书时未能及时签到，导致入场费打了水漂。网上找了一些，发现高赞的自动阅读需要挂虚拟器模拟或者用ADB模拟，实现一点也不优雅。因此，我决定编写一个自动化脚本。通过对官网接口的抓包和JS逆向分析，脚本能够解析各接口请求，分析字段拼接方式，并对字段进行加密和计算处理，确保服务器成功响应。
@@ -20,16 +9,53 @@
 该脚本具备以下功能：
 
 - **自动刷阅读时长**：默认计入排行榜和挑战赛，时长可调节，默认为60分钟。
-- **定时运行**：可部署在GitHub Action/服务器上，支持每天定时运行并推送结果到微信。
+- **定时运行**：可部署在服务器上，支持每天定时运行并推送结果到微信。
 - **Cookie自动更新**：一次抓包后，脚本能自动获取并更新Cookie，支持长时间使用。
 - **轻量化设计**：相比市面上的ADB调试器和自动阅读器，本脚本实现了轻量化的编写，部署服务器即可运行，无需额外环境条件。
 
-***
-## 操作步骤（v3.0） 🛠️
+## 功能特点 🌟
 
-### 1. 抓包准备（适合本地运行）
+1. **Web 界面管理**
+   - 用户注册和登录系统
+   - 多配置管理
+   - 实时状态监控
+   - 任务历史记录
 
-脚本逻辑还是比较简单的，`main.py`与`push.py`代码不需要改动。在微信阅读官网 [微信读书](https://weread.qq.com/) 搜索【三体】点开阅读点击下一页进行抓包，抓到`read`接口 `https://weread.qq.com/web/book/read`，如果返回格式正常（如：
+2. **自动阅读**
+   - 自动刷阅读时长
+   - 自动更新 Cookie
+   - 支持自定义阅读时长
+   - 实时进度显示
+
+3. **定时任务**
+   - 支持单次执行
+   - 支持每日定时
+   - 支持每周定时（可选择星期）
+   - 定时任务状态监控
+
+4. **消息推送**
+   - 支持 PushPlus 推送
+   - 支持 Telegram 推送
+   - 任务执行状态通知
+   - 错误信息推送
+
+5. **系统监控**
+   - 任务运行状态监控
+   - 并发任务控制
+   - 运行时间限制
+   - 详细的日志记录
+
+## 部署说明 🚀
+
+### 1. 环境要求
+
+- Python 3.8+
+- MySQL 5.7+
+- Linux/Windows 服务器
+
+### 2. 抓包准备
+
+在微信阅读官网 [微信读书](https://weread.qq.com/) 搜索【三体】点开阅读点击下一页进行抓包，抓到`read`接口 `https://weread.qq.com/web/book/read`，如果返回格式正常（如：
 
 ```json
 {
@@ -38,70 +64,80 @@
 }
 ```
 
-右键复制为Bash格式，然后在 [Convert](https://curlconverter.com/python/) 转化为Python脚本，复制需要的headers与cookies字段替换到`capture.py`（data字段保留），运行`main.py`即可，依赖自行安装。
+右键复制为Bash格式，然后在 [Convert](https://curlconverter.com/python/) 转化为Python脚本，复制需要的headers与cookies字段，再启动Web端后创建配置，将复制的headers和cookies粘贴到相应的输入框。
 
-### 2. GitHub Action部署运行（GitHub运行）
+### 3. 安装步骤
 
-
-- Fork这个仓库，在仓库 **Settings** -> 左侧列表中的 **Secrets and variables** -> **Actions**，然后在右侧的 **Repository secrets** 中添加如下值：
-  - `WXREAD_HEADERS`：你的 headers 字典（去掉抓包得到的 `headers=`，填写后面内容）。
-  - `WXREAD_COOKIES`：你的 cookies 字典（去掉抓包得到的 `cookies=`，填写后面内容）。
-  - `PUSH_METHOD`：推送方法，可以填写你想使用的推送方式（pushplus或telegram）。
-  - `PUSHPLUS_TOKEN`/`TELEGRAM_BOT_TOKEN`&`TELEGRAM_CHAT_ID`: 推送key值。
-  
-- 在 **Variables** 部分，最下方添加变量：
-  - `READ_NUM`：设定每次阅读的目标次数。
-
-- 释义如下：
-
-| Key                  | Value                                                             | 说明                                      |
-|----------------------|-------------------------------------------------------------------|-------------------------------------------|
-| `WXREAD_HEADERS`      | 微信读书headers (必填)                                            | 必须提供有效的请求头                     |
-| `WXREAD_COOKIES`      | 微信读书cookies (必填)                                          | 必须提供有效的cookies                    |
-| `READ_NUM`           | 阅读时长，每次代表30秒(可选)                                   | 控制阅读时长，默认60分钟                     |
-| `PUSH_METHOD`        | 推送方式，可选值为 `pushplus` 或 `telegram` (可选)               | 选择推送方式，默认不推送                             |
-| `PUSHPLUS_TOKEN`      | pushplus token (可选)                                           | 仅在选择 `pushplus` 时需要填写          |
-| `TELEGRAM_BOT_TOKEN`  | telegram bot token (可选)                                       | 仅在选择 `telegram` 时需要填写         |
-| `TELEGRAM_CHAT_ID`    | telegram chat id (可选)                                         | 仅在选择 `telegram` 时需要填写         |
-
-
-<img src="https://github.com/user-attachments/assets/69694f8a-e6be-4c3a-820a-ac79ec2a22e5" alt="微信截图_17309442135616" width="800px"/>
-
-### 3. 服务器运行（可选）
-
-在你的服务器上有Python运行环境即可，使用`cron`定义自动运行。（如：
+1. 安装依赖：
 
 ```bash
-0 2 * * * /www/server/pyproject_env/wxread_venv/bin/python3 /root/wxread/main.py >> /root/wxread/logs/$(date +\%y-\%m.\%d)_sout.log 2>&1
+pip install -r requirements.txt
 ```
 
-意思为：【在每天两点时刻使用python所在位置编译器运行某个路径下的`main.py`脚本，同时将输出按每天的日期格式输出到对应日志中】可供参考）。
+2. 配置数据库：
 
-
-***
-## 代理配置说明 🌐
-
-如果你需要使用代理来确保消息推送的可靠性（特别是使用 Telegram 推送时），可以通过以下方式配置：
-
-### 本地运行时：
-在系统中设置环境变量：
 ```bash
-export http_proxy=http://127.0.0.1:7890
-export https_proxy=http://127.0.0.1:7890
+mysql -u root -p
+# 在 MySQL 中执行：
+CREATE DATABASE wxread DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# 导入数据库结构
+mysql -u root -p wxread < schema.sql
 ```
 
-### 使用 crontab 运行时：
-在 crontab 命令前添加代理设置：
+3. 修改配置：
+   编辑 `config.py` 文件，设置数据库连接信息和其他配置项。
+
+4. 启动服务：
+
 ```bash
-30 0 * * * http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 /usr/bin/python3 /path/to/your/main.py >> /path/to/logs/$(date +\%y-\%m.\%d)_sout.log 2>&1
+python app.py
 ```
 
-### GitHub Actions 中：
-在仓库的 Secrets 中添加：
-- `http_proxy`: 你的 HTTP 代理地址
-- `https_proxy`: 你的 HTTPS 代理地址
+### 4. 使用说明
 
-然后在 workflow 文件中使用这些环境变量。
+1. **添加配置**
+   - 登录系统后点击"添加新配置"
+   - 填写从微信读书网页版抓取的 Headers 和 Cookies
+   - 设置阅读次数和推送方式
+
+2. **设置定时任务**
+   - 在配置卡片中点击"定时"按钮
+   - 选择执行方式（单次/每日/每周）
+   - 设置执行时间和日期（如果是每周）
+
+3. **查看任务历史**
+   - 点击导航栏的"任务历史"
+   - 查看所有任务的执行记录
+   - 可以查看详细的错误信息
+
+4. **编辑配置**
+   - 点击配置卡片中的"编辑"按钮
+   - 修改阅读次数和推送设置
+   - 保存更改后立即生效
+
+## 注意事项 ⚠️
+
+1. **Cookie 有效期**
+   - Cookie 会定期失效，系统会自动尝试更新
+   - 如果更新失败需要手动更新配置
+
+2. **并发限制**
+   - 默认最大并发任务数为 5
+   - 超出限制的任务会被自动停止
+
+3. **运行时间**
+   - 单个任务最长运行时间为 2 小时
+   - 超时任务会被自动终止
+
+4. **定时任务**
+   - 确保服务器时间准确
+   - 单次任务执行后会自动清除调度
+
+5. **签到次数调整**
+   * 只需完成签到将`num`次数从120调整为2，每次`num`为30秒，200即100分钟。
+
+6. **解决阅读时间问题**
+   * 对于issue中提出的“阅读时间没有增加”，“增加时间与刷的时间不对等”建议替换`capture.py`中的【headers】、【cookies】字段。保留【data】字段。
 
 ***
 ## 字段解释 🔍
@@ -171,10 +207,32 @@ export https_proxy=http://127.0.0.1:7890
 
 ![352c71c4cdd2e16e84cb9239499573a1](pic/352c71c4cdd2e16e84cb9239499573a.jpg)
 
-#### 5. 服务器自动运行指令
-
-![image-20241004120026766](pic/image-20241004120026766.png)
-
-#### 6. 完成推送
+#### 5. 完成推送
 
 ![5ed32774727aadb47aeb32ca21db8342](pic/5ed32774727aadb47aeb32ca21db8342.jpg)
+
+1. - 
+
+## 更新日志 📝
+
+### v2.0.0 (2024-12-25)
+- 添加 Web 界面管理功能
+- 支持多用户和多配置
+- 添加定时任务功能
+- 添加任务历史记录
+- 支持配置编辑功能
+- 添加运行状态监控
+- 优化推送功能
+
+### v1.0.0 (2024-12-01)
+- 基础自动阅读功能
+- Cookie 自动更新
+- 基础推送功能
+
+## 问题反馈 💬
+
+如果遇到问题或有建议，请提交 Issue。
+
+## 免责声明 📢
+
+本项目仅供学习交流使用，请勿用于商业用途。使用本项目产生的任何后果由使用者自行承担。
